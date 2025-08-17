@@ -15,6 +15,10 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+HLS_ROOT = BASE_DIR / 'hls'
+HLS_ALLOWED_RESOLUTIONS = {'240p', '360p', '480p', '720p', '1080p'}
+HLS_ALLOWED_SEGMENT_EXTS = {'.ts'}
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -48,6 +52,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'authentication_app',
+    'video_app',
 ]
 
 MIDDLEWARE = [
