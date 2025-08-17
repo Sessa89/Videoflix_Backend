@@ -60,28 +60,20 @@ This repository contains the Django REST Framework–based backend for **Videofl
 
 ---
 
-## Configuration
+## Features
 
-Key settings (see `videoflix_core/settings.py`):
+- **Authentication**
+  - Register with email + password
+  - Email activation (GET link and POST fallback)
+  - Login with email/password → JWT (HttpOnly cookies)
+  - Cookie-based token refresh (`refresh_token` read from cookie)
+  - Logout (blacklists refresh token and deletes cookies)
+  - Password reset request (email with token)
+  - Password reset confirm via URL params (`/password_confirm/<uid>/<token>/`)  
 
-- **Email**
-  - `EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'` (emails appear in the runserver console)
-  - `DEFAULT_FROM_EMAIL = 'noreply@videoflix.local'`
-  - `FRONTEND_BASE_URL = 'http://localhost:5500'`  
-    (used to build activation/reset links; point this to the folder that contains `activate.html` / `reset.html`)
-
-- **JWT (SimpleJWT)**
-  - Access: 30 min, Refresh: 7 days
-  - HttpOnly cookies: `access_token`, `refresh_token`
-  - Refresh token blacklist enabled on logout
-
-- **CORS**
-  - `CORS_ALLOWED_ORIGINS` includes `http://127.0.0.1:5500` and `http://localhost:5500`
-  - `CORS_ALLOW_CREDENTIALS = True`
-
-- **HLS (video files)**
-  - `HLS_ROOT = BASE_DIR / 'hls'`
-  - Allowed resolutions: `{'240p','360p','480p','720p','1080p'}`
-  - Allowed segment extensions: `{'.ts'}`
+- **Video API**
+  - List videos (title, description, thumbnail URL, category, created at) — auth required
+  - Serve HLS master playlist `index.m3u8` — auth required
+  - Serve HLS segment `.ts` — auth required, safe against path traversal
 
 ---
