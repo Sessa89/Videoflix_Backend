@@ -29,3 +29,15 @@ class PasswordResetEndpointTests(APITestCase):
         resp = self.client.post(self.url, {}, format='json')
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('email', resp.data)
+
+    def test_password_reset_sends_html_email(self):
+        resp = self.client.post(self.url, {'email': self.email}, format='json')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+        msg = mail.outbox[0]
+        
+        self.assertTrue(hasattr(msg, "alternatives"))
+        self.assertGreaterEqual(len(msg.alternatives), 1)
+        content, mimetype = msg.alternatives[0]
+        self.assertEqual(mimetype, "text/html")
+        self.assertIn("Reset password", content)

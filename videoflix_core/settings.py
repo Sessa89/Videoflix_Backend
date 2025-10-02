@@ -11,10 +11,16 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os, certifi
+from datetime import timedelta
+
+os.environ['SSL_CERT_FILE'] = certifi.where()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+# HLS (Video-Streaming)
 HLS_ROOT = BASE_DIR / 'hls'
 HLS_ALLOWED_RESOLUTIONS = {'240p', '360p', '480p', '720p', '1080p'}
 HLS_ALLOWED_SEGMENT_EXTS = {'.ts'}
@@ -47,10 +53,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
+    
     'authentication_app',
     'video_app',
 ]
@@ -71,7 +79,7 @@ ROOT_URLCONF = 'videoflix_core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -139,6 +147,7 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+# DRF / Authentication
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -149,7 +158,6 @@ REST_FRAMEWORK = {
     ],
 }
 
-from datetime import timedelta
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
@@ -158,7 +166,43 @@ SIMPLE_JWT = {
 
 PASSWORD_RESET_TIMEOUT = 60 * 60 * 48
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'noreply@videoflix.local'
 
-FRONTEND_BASE_URL = 'http://localhost:5500'
+# Frontend-Linkbase
+FRONTEND_BASE_URL = os.getenv('FRONTEND_BASE_URL', 'http://localhost:5500')
+
+
+# Email (HTML via Templates)
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@videoflix.local')
+
+# Choosing Backend: console (dev), smtp (prod) or filebased (debug-files)
+# EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+
+# if EMAIL_BACKEND == 'django.core.mail.backends.smtp.EmailBackend':
+#     EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+#     EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+#     EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+#     EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+#     EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'true').lower() == 'true'
+#     EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'false').lower() == 'true'
+
+# if EMAIL_BACKEND == 'django.core.mail.backends.filebased.EmailBackend':
+#     EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'
+
+
+
+
+
+# --- ECHTER SMTP-VERSAND (Outlook/Hotmail) ---
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.office365.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+EMAIL_TIMEOUT = 30
+
+EMAIL_HOST_USER = 'DEIN_LOGIN@outlook.com'
+EMAIL_HOST_PASSWORD = 'DEIN_APP_PASSWORT_ODER_PASSWORT'
+
+
+# Absender sollte identisch mit dem SMTP-Login sein (sonst lehnen viele Provider ab)
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

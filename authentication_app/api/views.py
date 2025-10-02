@@ -17,6 +17,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
 
 from .serializers import RegistrationSerializer
+from .email_utils import send_activation_email, send_password_reset_email
 
 class RegistrationView(APIView):
     permission_classes = [AllowAny]
@@ -26,22 +27,12 @@ class RegistrationView(APIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 
-        token = default_token_generator.make_token(user)
-        uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
-        activation_link = f"{getattr(settings,'FRONTEND_BASE_URL','https://example.com')}/activate.html?uid={uidb64}&token={token}"
-
-        send_mail(
-            subject='Activate your Videoflix account',
-            message=f"Click to activate: {activation_link}",
-            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
-            recipient_list=[user.email],
-            fail_silently=True,
-        )
+        send_activation_email(user)
 
         return Response(
             {
                 'user': {'id': user.id, 'email': user.email},
-                'token': token,
+                'detail': 'Activation email sent.'
             },
             status=status.HTTP_201_CREATED,
         )
@@ -225,17 +216,7 @@ class PasswordResetRequestView(APIView):
         except User.DoesNotExist:
             return Response({'detail': 'An email has been sent to reset your password.'}, status=status.HTTP_200_OK)
 
-        token = default_token_generator.make_token(user)
-        uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
-        reset_link = f"{getattr(settings, 'FRONTEND_BASE_URL', 'https://example.com')}/reset.html?uid={uidb64}&token={token}"
-
-        send_mail(
-            subject='Reset your Videoflix password',
-            message=f'Use this link to set a new password: {reset_link}',
-            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
-            recipient_list=[user.email],
-            fail_silently=True,
-        )
+        send_password_reset_email(user)
 
         return Response({'detail': 'An email has been sent to reset your password.'}, status=status.HTTP_200_OK)
     
