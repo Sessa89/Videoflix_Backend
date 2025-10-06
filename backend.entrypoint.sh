@@ -40,4 +40,8 @@ EOF
 
 python manage.py rqworker default &
 
-exec gunicorn core.wsgi:application --bind 0.0.0.0:8000 --reload
+# ACHTUNG
+# Projektbezeichnung berücksichtigen
+# ODER
+# Projekt zukünftig als "core" bezeichnen => universell nutzbar 
+exec gunicorn videoflix_core.wsgi:application --bind 0.0.0.0:8000 --reload
