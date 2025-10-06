@@ -10,10 +10,15 @@ This repository contains the Django REST Framework–based backend for **Videofl
 
 ### Backend Setup
 
-1. **Create a virtuel environment**
+1. **Set your virtuel environment**
+    Edit ".env"-file": SECRET_KEY, settings of your database, settings of your redis, settings of your email
+    Take a look at ".env.template"-file
+
+2. **Create a virtuel environment**
     ```bash
     python3 -m venv env
     ```
+    
     ```bash
     source env/bin/activate   # macOS/Linux
     ```
@@ -22,12 +27,20 @@ This repository contains the Django REST Framework–based backend for **Videofl
     .\env\Scripts\Activate.ps1  # Windows PowerShell
     ```
 
-2. **Install Python dependencies**
+    ```bash
+    python3 -m manage.py makemigrations
+    ```
+
+    ```bash
+    python3 -m manage.py migrate
+    ``` 
+
+3. **Install Python dependencies**
     ```bash
     pip install -r requirements.txt
     ```
 
-3. **Apply database migrations**
+4. **Apply database migrations**
     ```bash
     python manage.py makemigrations
     ```
@@ -35,12 +48,12 @@ This repository contains the Django REST Framework–based backend for **Videofl
     python manage.py migrate
     ```
 
-4. **Optional: Create a superuser**
+5. **Optional: Create a superuser**
     ```bash
     python manage.py createsuperuser
     ```
 
-5. **Run the backend server**
+6. **Run the backend server**
     ```bash
     python manage.py runserver
     ```

@@ -12,7 +12,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os, certifi
+from dotenv import load_dotenv
 from datetime import timedelta
+
+load_dotenv()
 
 os.environ['SSL_CERT_FILE'] = certifi.where()
 
@@ -35,12 +38,8 @@ SECRET_KEY = 'django-insecure-4nbv@e=ob(g$275)ps!=r0l=u2$1c13fnzvqfc#&@33$n89$cg
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
-
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5500',
-    'http://127.0.0.1:5500'
-]
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1').split(',')
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://127.0.0.1:5500').split(',')
 CORS_ALLOW_CREDENTIALS = True
 
 
@@ -160,7 +159,7 @@ REST_FRAMEWORK = {
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'BLACKLIST_AFTER_ROTATION': True,
 }
 
@@ -168,41 +167,14 @@ PASSWORD_RESET_TIMEOUT = 60 * 60 * 48
 
 
 # Frontend-Linkbase
-FRONTEND_BASE_URL = os.getenv('FRONTEND_BASE_URL', 'http://localhost:5500')
+FRONTEND_BASE_URL = os.getenv('FRONTEND_BASE_URL', 'http://127.0.0.1:5500')
 
 
-# Email (HTML via Templates)
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@videoflix.local')
-
-# Choosing Backend: console (dev), smtp (prod) or filebased (debug-files)
-# EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
-
-# if EMAIL_BACKEND == 'django.core.mail.backends.smtp.EmailBackend':
-#     EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-#     EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
-#     EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
-#     EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-#     EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'true').lower() == 'true'
-#     EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'false').lower() == 'true'
-
-# if EMAIL_BACKEND == 'django.core.mail.backends.filebased.EmailBackend':
-#     EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'
-
-
-
-
-
-# --- ECHTER SMTP-VERSAND (Outlook/Hotmail) ---
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.office365.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_USE_SSL = False
-EMAIL_TIMEOUT = 30
-
-EMAIL_HOST_USER = 'DEIN_LOGIN@outlook.com'
-EMAIL_HOST_PASSWORD = 'DEIN_APP_PASSWORT_ODER_PASSWORT'
-
-
-# Absender sollte identisch mit dem SMTP-Login sein (sonst lehnen viele Provider ab)
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False') == 'True'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
