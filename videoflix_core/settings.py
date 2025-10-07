@@ -61,7 +61,7 @@ INSTALLED_APPS = [
     'corsheaders',
     
     'authentication_app',
-    'video_app',
+    'video_app.apps.VideoAppConfig',
 ]
 
 MIDDLEWARE = [
