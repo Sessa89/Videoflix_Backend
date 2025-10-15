@@ -1,4 +1,17 @@
 """
+Root URL configuration for Videoflix.
+
+Routes:
+- /admin/       → Django admin
+- /django-rq/   → RQ dashboard (queue monitoring)
+- /api/...      → Authentication & Video APIs (see app-level urls)
+
+The app-level routers are included under the `/api/` prefix to present a
+single, cohesive public API surface for the frontend.
+"""
+
+
+"""
 URL configuration for videoflix_core project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
