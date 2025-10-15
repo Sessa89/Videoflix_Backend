@@ -1,3 +1,13 @@
+"""
+Tests for serving individual HLS segments (.ts files).
+
+Covers:
+- Requires auth (401 for anonymous).
+- 404 when segment does not exist.
+- 200 with correct MIME type when segment exists.
+- Reject path traversal and bad extensions.
+"""
+
 import tempfile
 from pathlib import Path
 from django.urls import reverse
@@ -8,7 +18,15 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 
 class VideoSegmentTests(APITestCase):
+    """
+    E2E tests for GET /api/video/<movie_id>/<resolution>/<segment>/
+    """
+
     def _login(self):
+        """
+        Helper to create and authenticate a user.
+        """
+
         reg = reverse('api-register')
         act = reverse('api-activate')
         log = reverse('api-login')
@@ -22,18 +40,30 @@ class VideoSegmentTests(APITestCase):
         self.client.post(log, {'email': email, 'password': pw}, format='json')
 
     def test_requires_auth(self):
+        """
+        Anonymous request should be rejected with 401.
+        """
+
         url = reverse('video-segment', kwargs={'movie_id': 1, 'resolution': '720p', 'segment': '000.ts'})
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
 
     @override_settings(HLS_ALLOWED_RESOLUTIONS={'720p'}, HLS_ALLOWED_SEGMENT_EXTS={'.ts'})
     def test_404_when_not_found(self):
+        """
+        Missing segment files yield 404 Not Found.
+        """
+
         self._login()
         url = reverse('video-segment', kwargs={'movie_id': 2, 'resolution': '720p', 'segment': '000.ts'})
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_serves_segment(self):
+        """
+        Existing .ts segment is streamed with the expected content type.
+        """
+
         self._login()
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -52,12 +82,20 @@ class VideoSegmentTests(APITestCase):
                 self.assertEqual(resp.getvalue(), seg_bytes)
 
     def test_rejects_bad_segment_name(self):
+        """
+        Protect against path traversal by rejecting unsafe segment names.
+        """
+
         self._login()
         with override_settings(HLS_ALLOWED_RESOLUTIONS={'720p'}):
             resp = self.client.get('/api/video/1/720p/../hack.ts/')
             self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_rejects_bad_extension(self):
+        """
+        Only allow whitelisted extensions (e.g., .ts).
+        """
+
         self._login()
         with override_settings(HLS_ALLOWED_RESOLUTIONS={'720p'}, HLS_ALLOWED_SEGMENT_EXTS={'.ts'}):
             resp = self.client.get('/api/video/1/720p/000.m4s/')

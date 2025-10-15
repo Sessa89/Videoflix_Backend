@@ -1,3 +1,17 @@
+"""
+API views for the Video app.
+
+Endpoints:
+- VideoListView: returns a list of videos (metadata only), auth required.
+- VideoIndexM3U8View: reads & returns an HLS master playlist from disk, auth required.
+- VideoSegmentView: streams a single HLS segment from disk, auth required.
+
+Security:
+- Resolution is validated against allowed set (settings.HLS_ALLOWED_RESOLUTIONS).
+- Segment name must be a simple filename (prevents path traversal).
+- Segment extension must be whitelisted (settings.HLS_ALLOWED_SEGMENT_EXTS).
+"""
+
 from django.conf import settings
 from django.http import HttpResponse, FileResponse
 from pathlib import Path
@@ -11,11 +25,23 @@ from video_app.models import Video
 from .serializers import VideoListSerializer
 
 class VideoListView(ListAPIView):
+    """
+    Return a list of available videos with metadata.
+
+    Auth: required
+    """
+
     permission_classes = [IsAuthenticated]
     serializer_class = VideoListSerializer
     queryset = Video.objects.all()
 
 class VideoIndexM3U8View(APIView):
+    """
+    Serve the HLS master playlist (`index.m3u8`) for a given movie/resolution.
+
+    Validates requested resolution and that the manifest file exists under HLS_ROOT.
+    """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request, movie_id: int, resolution: str):
@@ -37,6 +63,15 @@ class VideoIndexM3U8View(APIView):
         return HttpResponse(content, content_type='application/vnd.apple.mpegurl')
     
 class VideoSegmentView(APIView):
+    """
+    Serve an individual HLS segment (e.g., `000.ts`).
+
+    Enforces:
+    - Allowed resolution set
+    - Safe filename (no traversal)
+    - Allowed file extension (e.g., .ts)
+    """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request, movie_id: int, resolution: str, segment: str):

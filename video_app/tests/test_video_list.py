@@ -1,3 +1,11 @@
+"""
+Tests for listing videos.
+
+Covers:
+- Anonymous user is rejected with 401.
+- Authenticated user gets a list of serialized video metadata.
+"""
+
 from django.urls import reverse
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
@@ -6,6 +14,10 @@ from rest_framework.test import APITestCase
 from video_app.models import Video
 
 class VideoListTests(APITestCase):
+    """
+    E2E tests for GET /api/video/
+    """
+
     def setUp(self):
         
         self.register_url = reverse('api-register')
@@ -42,12 +54,20 @@ class VideoListTests(APITestCase):
         )
 
     def test_list_requires_authentication(self):
+        """
+        Anonymous requests must be rejected with 401 Unauthorized.
+        """
+
         from rest_framework.test import APIClient
         anon = APIClient()
         resp = anon.get(self.list_url)
         self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_list_returns_video_metadata(self):
+        """
+        Authenticated requests receive a list of serialized video metadata.
+        """
+
         resp = self.client.get(self.list_url)
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertIsInstance(resp.data, list)

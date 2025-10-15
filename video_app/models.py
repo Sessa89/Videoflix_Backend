@@ -1,8 +1,20 @@
+"""
+Database models for the Video app.
+
+Currently exposes a single `Video` model which stores metadata and
+optionally a raw uploaded file. Streaming (HLS) is handled via the file
+system under `HLS_ROOT` in project settings.
+"""
+
 from django.db import models
 
 # Create your models here.
 
 class Video(models.Model):
+    """
+    Represents a movie/clip with metadata and optional uploaded video file.
+    """
+
     class Category(models.TextChoices):
         ACTION = 'ACTION', 'Action'
         DRAMA = 'DRAMA', 'Drama'

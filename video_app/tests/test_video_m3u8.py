@@ -1,3 +1,12 @@
+"""
+Tests for serving HLS master playlist (index.m3u8).
+
+Covers:
+- Requires auth (401 for anonymous).
+- 404 when manifest file is missing.
+- 200 with correct content type when manifest exists.
+"""
+
 import tempfile
 from pathlib import Path
 from django.urls import reverse
@@ -8,8 +17,15 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 
 class VideoM3U8Tests(APITestCase):
+    """
+    E2E tests for GET /api/video/<movie_id>/<resolution>/index.m3u8
+    """
 
     def _login(self):
+        """
+        Helper to create and authenticate a user for protected endpoints.
+        """
+
         register_url = reverse('api-register')
         activate_url = reverse('api-activate')
         login_url    = reverse('api-login')
@@ -29,12 +45,20 @@ class VideoM3U8Tests(APITestCase):
 
     @override_settings(HLS_ALLOWED_RESOLUTIONS={'720p'})
     def test_404_if_file_missing(self):
+        """
+        If the manifest is not present on disk, return 404.
+        """
+
         self._login()
         url = reverse('video-m3u8', kwargs={'movie_id': 1, 'resolution': '720p'})
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_serves_manifest_when_present(self):
+        """
+        When the m3u8 exists, serve it with the expected MIME type.
+        """
+
         self._login()
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
@@ -54,6 +78,10 @@ class VideoM3U8Tests(APITestCase):
                 self.assertIn('#EXTM3U', resp.content.decode('utf-8'))
 
     def test_401_without_auth(self):
+        """
+        Anonymous requests are rejected.
+        """
+
         url = reverse('video-m3u8', kwargs={'movie_id': 1, 'resolution': '720p'})
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)

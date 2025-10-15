@@ -1,3 +1,11 @@
+"""
+URL routes for the Video app.
+
+- /api/video/                                → list metadata (auth required)
+- /api/video/<int:movie_id>/<str:resolution>/index.m3u8  → serve HLS master playlist
+- /api/video/<int:movie_id>/<str:resolution>/<str:segment>/ → serve HLS segment
+"""
+
 from django.urls import path
 from .views import VideoListView, VideoIndexM3U8View, VideoSegmentView
 
