@@ -1,3 +1,10 @@
+"""
+URL patterns for authentication endpoints.
+
+All routes are prefixed by `/api/` from the project `urls.py`.
+This module only maps to view classes; see each view for behavior and payloads.
+"""
+
 from django.urls import path
 from .views import (
     RegistrationView,

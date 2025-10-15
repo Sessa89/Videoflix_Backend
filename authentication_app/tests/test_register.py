@@ -1,3 +1,12 @@
+"""
+Tests for the registration endpoint.
+
+Covers:
+- Successful registration returns 201, user payload, and sends an email.
+- Password mismatch yields 400 with a field error.
+- Duplicate email yields 400 with a field error.
+"""
+
 from django.urls import reverse
 from django.core import mail
 from django.contrib.auth.models import User
@@ -6,6 +15,10 @@ from rest_framework.test import APITestCase
 
 
 class RegisterEndpointTests(APITestCase):
+    """
+    End-to-end tests for /api/register/
+    """
+
     def setUp(self):
         self.url = reverse('api-register')
         self.payload = {
@@ -15,6 +28,10 @@ class RegisterEndpointTests(APITestCase):
         }
 
     def test_register_success_returns_201_and_expected_payload(self):
+        """
+        Happy path: user is created inactive and activation email is sent.
+        """
+
         resp = self.client.post(self.url, self.payload, format='json')
 
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
@@ -31,6 +48,10 @@ class RegisterEndpointTests(APITestCase):
         self.assertIn(self.payload['email'], mail.outbox[0].to)
 
     def test_register_password_mismatch_returns_400(self):
+        """
+        Passwords must match; otherwise serializer returns 400 with a field error.
+        """
+
         bad = dict(self.payload)
         bad['confirmed_password'] = 'different'
         resp = self.client.post(self.url, bad, format='json')
@@ -39,6 +60,10 @@ class RegisterEndpointTests(APITestCase):
         self.assertIn('password', resp.data)
 
     def test_register_duplicate_email_returns_400(self):
+        """
+        Cannot reuse an existing email address.
+        """
+
         User.objects.create_user(
             username=self.payload['email'],
             email=self.payload['email'],

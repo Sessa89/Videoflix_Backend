@@ -1,3 +1,13 @@
+"""
+Tests for cookie-based token refresh.
+
+Covers:
+- Happy path: returns a new access token and sets a fresh cookie.
+- Missing refresh cookie returns 400.
+- Invalid refresh cookie returns 401.
+- Using refresh after logout is unauthorized.
+"""
+
 from django.urls import reverse
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
@@ -5,6 +15,10 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 class CookieTokenRefreshTests(APITestCase):
+    """
+    E2E tests for /api/token/refresh/
+    """
+
     def setUp(self):
         self.register_url = reverse('api-register')
         self.activate_url = reverse('api-activate')
@@ -30,6 +44,10 @@ class CookieTokenRefreshTests(APITestCase):
         self.old_access = self.client.cookies.get('access_token').value
 
     def test_refresh_success_sets_new_access_cookie_and_returns_access(self):
+        """
+        Happy path: server returns new JWT and sets it as an HttpOnly cookie.
+        """
+
         resp = self.client.post(self.refresh_url, {}, format='json')
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(resp.data.get('detail'), 'Token refreshed')
@@ -40,18 +58,30 @@ class CookieTokenRefreshTests(APITestCase):
         self.assertNotEqual(resp.data['access'], self.old_access)
 
     def test_refresh_without_cookie_returns_400(self):
+        """
+        Missing refresh cookie is a client error.
+        """
+
         self.client.cookies.clear()
         resp = self.client.post(self.refresh_url, {}, format='json')
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('Refresh token', resp.data['detail'])
 
     def test_refresh_with_invalid_cookie_returns_401(self):
+        """
+        Forged/invalid refresh cookie should be rejected with 401.
+        """
+
         self.client.cookies['refresh_token'] = 'invalid'
         resp = self.client.post(self.refresh_url, {}, format='json')
         self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertIn('Invalid refresh token', resp.data['detail'])
 
     def test_refresh_after_logout_is_unauthorized(self):
+        """
+        Once logged out, the refresh flow should no longer work.
+        """
+
         lo = self.client.post(self.logout_url)
         self.assertEqual(lo.status_code, status.HTTP_200_OK)
 

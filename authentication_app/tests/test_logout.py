@@ -1,3 +1,12 @@
+"""
+Tests for logout endpoint.
+
+Covers:
+- Successful logout blacklists the refresh token and clears cookies.
+- Missing refresh cookie returns 400.
+- Invalid refresh token returns 400.
+"""
+
 from django.urls import reverse
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
@@ -7,6 +16,10 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
 
 class LogoutEndpointTests(APITestCase):
+    """
+    E2E tests for /api/logout/
+    """
+
     def setUp(self):
         self.register_url = reverse('api-register')
         self.activate_url = reverse('api-activate')
@@ -32,6 +45,10 @@ class LogoutEndpointTests(APITestCase):
         self.assertIn('refresh_token', login.cookies)
 
     def test_logout_blacklists_refresh_and_deletes_cookies(self):
+        """
+        Refresh token should be blacklisted and cookies cleared after logout.
+        """
+
         refresh_cookie = self.client.cookies.get('refresh_token').value
         jti = RefreshToken(refresh_cookie)['jti']
 
@@ -47,12 +64,20 @@ class LogoutEndpointTests(APITestCase):
         self.assertNotIn('Set-Cookie', resp.headers.get('access_token', ''))
 
     def test_logout_without_refresh_cookie_returns_400(self):
+        """
+        Missing refresh cookie should be rejected with 400.
+        """
+
         self.client.cookies.clear()
         resp = self.client.post(self.logout_url)
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('Refresh token', resp.data['detail'])
 
     def test_logout_with_invalid_refresh_token_returns_400(self):
+        """
+        Invalid/forged refresh cookie should return 400.
+        """
+
         self.client.cookies['refresh_token'] = 'invalid'
         resp = self.client.post(self.logout_url)
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)

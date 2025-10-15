@@ -1,3 +1,22 @@
+"""
+REST API views for authentication flows.
+
+Endpoints covered:
+- POST /api/register/         → Create inactive user + send activation email.
+- POST /api/activate/         → Activate via JSON payload {uid, token}.
+- GET  /api/activate/<uid>/<token>/ → Activate via URL (browser-friendly).
+- POST /api/login/            → Issue JWTs (HttpOnly cookies).
+- POST /api/logout/           → Blacklist refresh token + clear cookies.
+- POST /api/token/refresh/    → Rotate access token (reads refresh cookie).
+- POST /api/password_reset/   → Send password reset email (neutral response).
+- POST /api/password_confirm/<uid>/<token>/ → Validate token & set new password.
+
+Security highlights:
+- Uses DRF SimpleJWT tokens stored in HttpOnly cookies.
+- Neutral responses for password reset (do not leak whether an email exists).
+- Validations are explicit, with status codes that align to common REST usage.
+"""
+
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
@@ -20,6 +39,26 @@ from .serializers import RegistrationSerializer
 from .email_utils import send_activation_email, send_password_reset_email
 
 class RegistrationView(APIView):
+    """
+    Create an inactive user and send an activation email.
+
+    Request (JSON):
+        {
+          "email": "user@example.com",
+          "password": "********",
+          "confirmed_password": "********"
+        }
+
+    Response 201:
+        {
+          "user": {"id": <int>, "email": "<email>"},
+          "detail": "Activation email sent."
+        }
+
+    Errors:
+        400 - Validation errors (email taken, or password mismatch)
+    """
+
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -38,6 +77,22 @@ class RegistrationView(APIView):
         )
 
 class ActivateAccountView(APIView):
+    """
+    Activate a user from a JSON payload (mobile/SPA-friendly).
+
+    Request (JSON):
+        {
+          "uid": "<base64 user id>",
+          "token": "<activation token>"
+        }
+
+    Response 200:
+        {"detail": "Account activated."}
+
+    Errors:
+        400 - Invalid payload, invalid/expired token, or unknown user
+    """
+
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -58,6 +113,16 @@ class ActivateAccountView(APIView):
         return Response({"detail": "Invalid or expired token."}, status=400)
     
 class ActivateAccountLinkView(APIView):
+    """
+    Activate a user directly via URL parameters (usable from an email link).
+
+    Response 200:
+        {"message": "Account successfully activated."}
+
+    Errors:
+        400 - Decoding failure, unknown user, invalid/expired token
+    """
+
     permission_classes = [AllowAny]
 
     def get(self, request, uidb64, token):
@@ -76,6 +141,20 @@ class ActivateAccountLinkView(APIView):
         return Response({'message': 'Activation failed.'}, status=status.HTTP_400_BAD_REQUEST)
     
 def _set_jwt_cookies(response, refresh_token, access_token):
+    """
+    Helper to set `access_token` and `refresh_token` as HttpOnly cookies.
+
+    Cookie attributes:
+      - `HttpOnly`: True
+      - `Secure`: derives from Django's `SESSION_COOKIE_SECURE`
+      - `SameSite`: derives from `CSRF_COOKIE_SAMESITE`
+      - `Path`: "/"
+      - `Max-Age`: taken from SimpleJWT lifetimes
+
+    Note:
+      This function mutates and returns the passed Response object.
+    """
+
     from django.conf import settings
 
     access_max_age  = int(getattr(settings, 'SIMPLE_JWT', {}).get('ACCESS_TOKEN_LIFETIME').total_seconds()) if getattr(settings, 'SIMPLE_JWT', None) else 60*30
@@ -106,6 +185,24 @@ def _set_jwt_cookies(response, refresh_token, access_token):
     return response
 
 class LoginView(APIView):
+    """
+    Authenticate a user by email+password and set JWT cookies.
+
+    Request (JSON):
+        {"email": "<email>", "password": "<password>"}
+
+    Response 200:
+        {
+          "detail": "Login successful",
+          "user": {"id": <int>, "username": "<email>"}
+        }
+        (Sets `access_token` and `refresh_token` cookies.)
+
+    Errors:
+        400 - Missing credentials
+        401 - Invalid credentials / inactive account
+    """
+
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -141,6 +238,19 @@ class LoginView(APIView):
         return _set_jwt_cookies(resp, refresh, access)
     
 class LogoutView(APIView):
+    """
+    Logout by blacklisting the refresh token and clearing cookies.
+
+    Request: (no body)
+      Requires the `refresh_token` cookie to be present.
+
+    Response 200:
+        {"detail": "Logout successful! All tokens will be deleted. Refresh token is now invalid."}
+
+    Errors:
+        400 - Missing or invalid refresh token
+    """
+
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -164,6 +274,12 @@ class LogoutView(APIView):
         return resp
     
 def _set_access_cookie(response, access_token):
+    """
+    Helper to set only the `access_token` cookie (used by refresh).
+
+    See `_set_jwt_cookies` for cookie attributes and rationale.
+    """
+
     from django.conf import settings
     
     access_max_age = 60 * 30
@@ -185,6 +301,21 @@ def _set_access_cookie(response, access_token):
     return response
 
 class CookieTokenRefreshView(APIView):
+    """
+    Issue a new access token based on the `refresh_token` cookie.
+
+    Request: (no body)
+      Reads the refresh token from the `refresh_token` cookie.
+
+    Response 200:
+        {"detail": "Token refreshed", "access": "<jwt-string>"}
+        (Also sets a fresh `access_token` cookie.)
+
+    Errors:
+        400 - Missing refresh cookie
+        401 - Invalid refresh token (expired/blacklisted)
+    """
+
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -204,6 +335,20 @@ class CookieTokenRefreshView(APIView):
         return _set_access_cookie(resp, new_access)
     
 class PasswordResetRequestView(APIView):
+    """
+    Start the password reset flow by sending a reset email if the user exists.
+
+    Request (JSON):
+        {"email": "<email>"}
+
+    Response 200:
+        {"detail": "An email has been sent to reset your password."}
+        (Always returned, even if the email does not exist, to avoid user enumeration.)
+
+    Errors:
+        400 - Missing email field
+    """
+
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -221,6 +366,23 @@ class PasswordResetRequestView(APIView):
         return Response({'detail': 'An email has been sent to reset your password.'}, status=status.HTTP_200_OK)
     
 class PasswordResetConfirmLinkView(APIView):
+    """
+    Confirm and apply a new password using URL-embedded uid/token.
+
+    Request (JSON):
+        {
+          "new_password": "<new>",
+          "confirm_password": "<new>"
+        }
+
+    Response 200:
+        {"detail": "Your Password has been successfully reset."}
+
+    Errors:
+        400 - Invalid payload, token invalid/expired, mismatching passwords,
+              or password failing Django's validators.
+    """
+
     permission_classes = [AllowAny]
 
     def post(self, request, uidb64, token):
