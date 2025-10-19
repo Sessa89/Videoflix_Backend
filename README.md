@@ -8,7 +8,26 @@ This repository contains the Django REST Framework–based backend for **Videofl
 
 ## Getting Started
 
-### Backend Setup
+### Run with Docker (recommended)
+
+1. **Copy env file and fill values**
+   ```bash
+   cp .env.template .env
+   
+   # then open ".env" and set DB_*, EMAIL_*, FRONTEND_* if needed
+   ```
+
+2. **Build & start**
+   ```bash
+   docker compose up --build
+   ```
+
+3. **Open**
+   - Backend API: http://127.0.0.1:8000
+   - Admin: http://127.0.0.1:8000/admin
+   - RQ dashboard: http://127.0.0.1:8000/django-rq/
+
+### Backend Setup (without Docker)
 
 1. **Set your virtual environment**
     ```bash
@@ -31,7 +50,9 @@ This repository contains the Django REST Framework–based backend for **Videofl
     ```bash
     source env/bin/activate   # macOS/Linux
     ```
+
     ### or
+
     ```bash
     .\env\Scripts\Activate.ps1  # Windows PowerShell
     ```
@@ -79,6 +100,22 @@ This repository contains the Django REST Framework–based backend for **Videofl
 2. **Start a local static server**
     - Right-click on index.html (inside frontend) and select "Open with Live Server" if you have VS Code Live Server installed
     - The frontend will run at "http://127.0.0.1:5500/"
+
+---
+
+## API (short overview)
+
+- POST /api/register/
+- POST /api/activate/ (Body: { "uid": "<uidb64>", "token": "<token>" })
+- GET /api/activate/<uid>/<token>/
+- POST /api/login/
+- POST /api/logout/
+- POST /api/token/refresh/
+- POST /api/password_reset/
+- POST /api/password_confirm/<uid>/<token>/
+- GET /api/video/
+- GET /api/video/<movie_id>/<resolution>/index.m3u8
+- GET /api/video/<movie_id>/<resolution>/<segment>/
 
 ---
 
