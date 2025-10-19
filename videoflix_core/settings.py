@@ -220,6 +220,8 @@ PASSWORD_RESET_TIMEOUT = 60 * 60 * 48
 
 # Frontend-Linkbase
 FRONTEND_BASE_URL = os.getenv('FRONTEND_BASE_URL', 'http://127.0.0.1:5500')
+FRONTEND_ACTIVATE_PATH = os.getenv('FRONTEND_ACTIVATE_PATH', '/pages/auth/activate.html')
+FRONTEND_RESET_PATH    = os.getenv('FRONTEND_RESET_PATH',    '/pages/auth/confirm_password.html')
 
 
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')

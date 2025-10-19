@@ -1,11 +1,17 @@
 {% extends 'emails/base_email.html' %}
 {% block content %}
-  <p>Hello {{ user_email }},</p>
-  <p>Thanks for signing up. Please confirm your account:</p>
-  <p>
-    <a class="btn" href="{{ activation_url }}" target="_blank">Activate account</a>
+  <p style="margin:0 0 12px;">Dear {{ user_email }},</p>
+  <p style="margin:0 0 20px;">
+    Thank you for registering with <strong>Videoflix</strong>. To complete your registration and verify your email address, please click the link below:
   </p>
-  <p class="muted">
-    Or open the link manually:<br />{{ activation_url }}
+
+  <p style="margin:0 0 24px;">
+    <a href="{{ activation_url }}" style="background:#3b82f6;color:#fff;text-decoration:none;display:inline-block;padding:14px 22px;border-radius:9999px;font-family:Arial,sans-serif;font-size:15px;font-weight:700;">Activate account</a>
   </p>
+
+  <p style="margin:0 0 8px;color:#6b7280;">If you did not create an account with us, please disregard this email.</p>
+
+  <p style="margin:0 0 8px;color:#6b7280;">Best regards,</p>
+
+  <p style="margin:0 0 8px;color:#6b7280;">Your Videoflix Team.</p>
 {% endblock %}

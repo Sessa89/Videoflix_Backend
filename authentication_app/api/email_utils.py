@@ -17,6 +17,16 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.contrib.auth.tokens import default_token_generator
 
+def _brand_context():
+    base = getattr(settings, "FRONTEND_BASE_URL", "http://127.0.0.1:5500")
+    logo_url = f"{base}/assets/icons/logo_icon.svg"
+    
+    return {
+        "brand_name": "Videoflix",
+        "brand_logo": logo_url,
+        "brand_logo_url": logo_url
+    }
+
 def _send_html_email(*, subject: str, template: str, context: dict, to_email: str):
     """
     Render an HTML email from a Django template and send it with a plaintext
@@ -34,7 +44,8 @@ def _send_html_email(*, subject: str, template: str, context: dict, to_email: st
           Handle delivery monitoring via logs/metrics in production.
     """
 
-    html = render_to_string(template, context)
+    ctx = {**_brand_context(), **context}
+    html = render_to_string(template, ctx)
     text = strip_tags(html)
     msg = EmailMultiAlternatives(
         subject=subject,
@@ -58,9 +69,10 @@ def build_activation_link(user):
 
     uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
-    base = getattr(settings, "FRONTEND_BASE_URL", "http://localhost:5500")
 
-    return f"{base}/activate.html?uid={uidb64}&token={token}"
+    base = getattr(settings, "FRONTEND_BASE_URL", "http://127.0.0.1:5500")
+    path = getattr(settings, "FRONTEND_ACTIVATE_PATH", "/pages/auth/activate.html")
+    return f"{base.rstrip('/')}{path}?uid={uidb64}&token={token}"
 
 def build_reset_link(user):
     """
@@ -72,9 +84,10 @@ def build_reset_link(user):
 
     uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
-    base = getattr(settings, "FRONTEND_BASE_URL", "http://localhost:5500")
 
-    return f"{base}/reset.html?uid={uidb64}&token={token}"
+    base = getattr(settings, "FRONTEND_BASE_URL", "http://127.0.0.1:5500")
+    path = getattr(settings, "FRONTEND_RESET_PATH", "/pages/auth/confirm_password.html")
+    return f"{base.rstrip('/')}{path}?uid={uidb64}&token={token}"
 
 def send_activation_email(user):
     """
@@ -86,8 +99,7 @@ def send_activation_email(user):
 
     activation_url = build_activation_link(user)
     ctx = {
-        "subject": "Activate your Videoflix account",
-        "brand_name": "Videoflix",
+        "subject": "Confirm your email",
         "user_email": user.email,
         "activation_url": activation_url,
     }
@@ -110,8 +122,7 @@ def send_password_reset_email(user):
 
     reset_url = build_reset_link(user)
     ctx = {
-        "subject": "Reset your Videoflix password",
-        "brand_name": "Videoflix",
+        "subject": "Reset your Password",
         "user_email": user.email,
         "reset_url": reset_url,
     }

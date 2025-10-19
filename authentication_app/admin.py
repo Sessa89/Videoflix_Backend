@@ -45,12 +45,13 @@ def resend_activation_email(modeladmin, request, queryset):
     frontend can consume to activate the account.
     """
 
-    base = getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:5500')
+    base = getattr(settings, 'FRONTEND_BASE_URL', 'http://127.0.0.1:5500')
+    activate_path = getattr(settings, 'FRONTEND_ACTIVATE_PATH', '/pages/auth/activate.html')
     count = 0
     for user in queryset.filter(is_active=False):
         uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
-        activation_link = f"{base}/activate.html?uid={uidb64}&token={token}"
+        activation_link = f"{base.rstrip('/')}{activate_path}?uid={uidb64}&token={token}"
         send_mail(
             subject='Activate your Videoflix account',
             message=f"Click to activate: {activation_link}",
