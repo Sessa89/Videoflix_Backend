@@ -45,6 +45,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 HLS_ROOT = BASE_DIR / 'hls'
 HLS_ALLOWED_RESOLUTIONS = {'240p', '360p', '480p', '720p', '1080p'}
 HLS_ALLOWED_SEGMENT_EXTS = {'.ts'}
+HLS_SEGMENT_SECONDS = 6
 
 
 # Quick-start development settings - unsuitable for production

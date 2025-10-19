@@ -26,15 +26,10 @@ class VideoAdmin(admin.ModelAdmin):
     ordering = ('-created_at',)
 
     fieldsets = (
-        (None, {
-            'fields': ('title', 'description', 'category')
-        }),
-        ('Artwork', {
-            'fields': ('thumbnail_url', 'thumbnail_preview')
-        }),
-        ('Meta', {
-            'fields': ('created_at',),
-        }),
+        (None, {'fields': ('title', 'description', 'category')}),
+        ('Source', {'fields': ('video_file',)}),
+        ('Artwork', {'fields': ('thumbnail_url', 'thumbnail_preview')}),
+        ('Meta', {'fields': ('created_at',),}),
     )
 
     def thumbnail_preview(self, obj):

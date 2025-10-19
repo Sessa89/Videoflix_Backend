@@ -27,6 +27,7 @@ services:
       - .:/app
       - videoflix_media:/app/media
       - videoflix_static:/app/static
+      - videoflix_hls:/app/hls
     ports:
       - "8000:8000"
     environment:
@@ -35,11 +36,9 @@ services:
       - db
       - redis
 
-
-
-
 volumes:
   postgres_data:
   redis_data:
   videoflix_media:
   videoflix_static:
+  videoflix_hls:

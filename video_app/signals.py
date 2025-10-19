@@ -9,12 +9,20 @@ Notes:
 - For production-grade pipelines, consider better error handling and idempotency.
 """
 
-from video_app.tasks import convert_480p
-from .models import Video
-from django.dispatch import receiver
-from django.db.models.signals import post_save, post_delete
 import os
+import shutil
+from pathlib import Path
+from django.conf import settings
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
 import django_rq
+
+from .models import Video
+from .tasks import transcode_to_hls
+
+def _hls_dir_for(video_id: int) -> Path:
+    root = Path(getattr(settings, 'HLS_ROOT', Path.cwd() / 'hls'))
+    return root / str(video_id)
 
 @receiver(post_save, sender=Video)
 def video_post_save(sender, instance, created, **kwargs):
@@ -24,22 +32,31 @@ def video_post_save(sender, instance, created, **kwargs):
     This keeps the HTTP request fast while media processing happens asynchronously.
     """
 
-    print('Video wurde gespeichert')
-    if created:
-        print('New video created')
-        queue = django_rq.get_queue('default', autocommit=True)
-        queue.enqueue(convert_480p, instance.video_file.path)
+    if not instance.video_file:
+        return
+    
+    queue = django_rq.get_queue('default', autocommit=True)
+    queue.enqueue(
+        transcode_to_hls,
+        instance.pk,
+        instance.video_file.path,
+        resolutions=list(getattr(settings, 'HLS_ALLOWED_RESOLUTIONS', {'480p', '720p'})),
+        seg_seconds=int(getattr(settings, 'HLS_SEGMENT_SECONDS', 6)),
+    )
+
 
 
 @receiver(post_delete, sender=Video)
-def auto_delete_file_on_delete(sender, instance, **kwargs):
-    """
-    Clean up the source file from the filesystem after the DB row is deleted.
-
-    Important: if you use cloud storage, replace this with the appropriate SDK call.
-    """
-    
-    if instance.video_file:
-        if os.path.isfile(instance.video_file.path):
+def video_post_delete(sender, instance: Video, **kwargs):
+    try:
+        if instance.video_file and os.path.isfile(instance.video_file.path):
             os.remove(instance.video_file.path)
+    except Exception:
+        pass
 
+    try:
+        hls_dir = _hls_dir_for(instance.pk)
+        if hls_dir.exists():
+            shutil.rmtree(hls_dir)
+    except Exception:
+        pass
