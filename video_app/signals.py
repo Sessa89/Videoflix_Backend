@@ -11,6 +11,7 @@ Notes:
 
 import os
 import shutil
+import logging
 from pathlib import Path
 from django.conf import settings
 from django.db.models.signals import post_save, post_delete
@@ -19,6 +20,8 @@ import django_rq
 
 from .models import Video
 from .tasks import transcode_to_hls
+
+logger = logging.getLogger(__name__)
 
 def _hls_dir_for(video_id: int) -> Path:
     root = Path(getattr(settings, 'HLS_ROOT', Path.cwd() / 'hls'))
@@ -35,16 +38,17 @@ def video_post_save(sender, instance, created, **kwargs):
     if not instance.video_file:
         return
     
-    queue = django_rq.get_queue('default', autocommit=True)
-    queue.enqueue(
-        transcode_to_hls,
-        instance.pk,
-        instance.video_file.path,
-        resolutions=list(getattr(settings, 'HLS_ALLOWED_RESOLUTIONS', {'480p', '720p'})),
-        seg_seconds=int(getattr(settings, 'HLS_SEGMENT_SECONDS', 6)),
-    )
-
-
+    try:
+        queue = django_rq.get_queue('default', autocommit=True)
+        queue.enqueue(
+            transcode_to_hls,
+            instance.pk,
+            instance.video_file.path,
+            resolutions=list(getattr(settings, 'HLS_ALLOWED_RESOLUTIONS', {'480p', '720p'})),
+            seg_seconds=int(getattr(settings, 'HLS_SEGMENT_SECONDS', 6)),
+        )
+    except Exception:
+        logger.exception("Could not enqueue HLS job for video #%s", instance.pk)
 
 @receiver(post_delete, sender=Video)
 def video_post_delete(sender, instance: Video, **kwargs):
@@ -52,11 +56,11 @@ def video_post_delete(sender, instance: Video, **kwargs):
         if instance.video_file and os.path.isfile(instance.video_file.path):
             os.remove(instance.video_file.path)
     except Exception:
-        pass
+        logger.exception("Could not remove source file for video #%s", instance.pk)
 
     try:
         hls_dir = _hls_dir_for(instance.pk)
         if hls_dir.exists():
             shutil.rmtree(hls_dir)
     except Exception:
-        pass
+        logger.exception("Could not remove HLS dir for video #%s", instance.pk)

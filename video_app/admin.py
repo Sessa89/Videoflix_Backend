@@ -7,11 +7,23 @@ Provides:
 - Bulk actions to set categories
 """
 
+from django import forms
 from django.contrib import admin
 from django.utils.html import format_html
 from .models import Video
 
 # Register your models here.
+
+class VideoAdminForm(forms.ModelForm):
+    class Meta:
+        model = Video
+        fields = '__all__'
+
+    def clean(self):
+        cleaned = super().clean()
+        if not cleaned.get('thumbnail_url'):
+            raise forms.ValidationError("Please provide a thumbnail URL")
+        return cleaned
 
 @admin.register(Video)
 class VideoAdmin(admin.ModelAdmin):

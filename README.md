@@ -15,12 +15,22 @@ This repository contains the Django REST Framework–based backend for **Videofl
 
 ### Run with Docker (recommended)
 
-1. **Copy env file and fill values**
-   ```bash
-   cp .env.template .env
-   
-   # then open ".env" and set DB_*, EMAIL_*, FRONTEND_* if needed
-   ```
+1. **Copy env file and fill values (locally, do **not** commit '.env')**
+    ```bash
+    cp .env.template .env
+    ```
+
+    > **[!IMPORTANT]**
+    >
+    > Replace the placeholder values for
+    > 
+    > - DB_*,
+    > - EMAIL_*,
+    > - FRONTEND_*
+    >
+    > within ".env" with actual values specific to your environment if necessary
+    >
+    > **Keep real secrets OUT of .env.template and OUT of git**
 
 2. **Build & start**
    ```bash
@@ -41,32 +51,38 @@ This repository contains the Django REST Framework–based backend for **Videofl
 
 ### Backend Setup (without Docker)
 
-1. **Set your virtual environment**
-    ```bash
-    Define the environment variables using the ".env.template"-file
+Only if you really want to run locally against sqlite/your own services.
 
-    # [!IMPORTANT]
-    # Replace the placeholder values with actual values specific to your environment, if necessary
-    ```
-
-2. **Create a virtuel environment**
+1. **Create and activate a virtuel environment**
     ```bash
     python3 -m venv env
     source env/bin/activate         # macOS/Linux
     # .\env\Scripts\Activate.ps1    # Windows PowerShell
     ```
 
-3. **Create ".env"-file with the settings of your ".env.template"-file**
+2. **Copy env file and fill values (locally, do **not** commit '.env')**
     ```bash
     cp .env.template .env
     ```
 
-4. **Install Python dependencies**
+    > **[!IMPORTANT]**
+    >
+    > Replace the placeholder values for
+    > 
+    > - DB_*,
+    > - EMAIL_*,
+    > - FRONTEND_*
+    >
+    > within ".env" with actual values specific to your environment if necessary
+    >
+    > **Keep real secrets OUT of .env.template and OUT of git**
+   
+3. **Install Python dependencies**
     ```bash
     pip install -r requirements.txt
     ```
 
-5. **Apply database migrations**
+4. **Apply database migrations**
     ```bash
     python manage.py makemigrations
     ```
@@ -74,12 +90,12 @@ This repository contains the Django REST Framework–based backend for **Videofl
     python manage.py migrate
     ```
 
-6. **Optional: Create a superuser**
+5. **Optional: Create a superuser**
     ```bash
     python manage.py createsuperuser
     ```
 
-7. **Run the backend server**
+6. **Run the backend server**
     ```bash
     python manage.py runserver
     ```

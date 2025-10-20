@@ -17,12 +17,12 @@ from pathlib import Path
 from django.conf import settings
 
 def _run(cmd: str):
-    completed = subprocess.run(
+    proc = subprocess.run(
         shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
     )
-    if completed.returncode != 0:
-        raise RuntimeError(f"Command failed ({completed.returncode}):\n{completed.stdout}")
-    return completed.stdout
+    if proc.returncode != 0:
+        raise RuntimeError(f"ffmpeg failed ({proc.returncode}):\n{proc.stdout}")
+    return proc.stdout
 
 def _res_to_height(res: str) -> int:
     try:
