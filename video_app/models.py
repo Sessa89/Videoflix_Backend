@@ -7,6 +7,7 @@ system under `HLS_ROOT` in project settings.
 """
 
 from django.db import models
+from django.core.exceptions import ValidationError
 
 # Create your models here.
 
@@ -32,8 +33,6 @@ class Video(models.Model):
     video_file = models.FileField(upload_to='videos/', blank=True, null=True)
     thumbnail_image = models.ImageField(upload_to='thumbnails/', blank=True, null=True)
 
-    thumbnail_url = models.URLField(max_length=500, blank=True)
-    
     category = models.CharField(max_length=20, choices=Category.choices, default=Category.OTHER)
     created_at = models.DateTimeField(auto_now_add=True)
 

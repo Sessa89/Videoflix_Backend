@@ -191,11 +191,6 @@ STATIC_ROOT = BASE_DIR / "static"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-VIDEO_THUMBNAIL_PLACEHOLDER_URL = os.getenv(
-    'VIDEO_THUMBNAIL_PLACEHOLDER_URL',
-    f"{os.getenv('FRONTEND_BASE_URL', 'http://127.0.0.1:5500')}/assets/icons/logo_icon.svg"
-)
-
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type

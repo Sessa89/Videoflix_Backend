@@ -15,22 +15,17 @@ class VideoListSerializer(serializers.ModelSerializer):
     """
 
     category = serializers.CharField(source='get_category_display', read_only=True)
+    thumbnail_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Video
         fields = ['id', 'created_at', 'title', 'description', 'thumbnail_url', 'category']
 
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        request = self.context.get('request')
+    def get_thumbnail_url(self, obj):
+        if obj.thumbnail_image:
+            request = self.context.get('request')
+            url = obj.thumbnail_image.url
+            
+            return request.build_absolute_uri(url) if request else url
 
-        if instance.thumbnail_image:
-            url = instance.thumbnail_image.url
-            if request is not None:
-                url = request.build_absolute_uri(url)
-            data['thumbnail_url'] = url
-
-        if not data.get('thumbnail_url'):
-            data['thumbnail_url'] = getattr(settings, 'VIDEO_THUMBNAIL_PLACEHOLDER_URL', None)
-
-        return data
+        return None

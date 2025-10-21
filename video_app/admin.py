@@ -9,6 +9,7 @@ Provides:
 
 from django import forms
 from django.contrib import admin
+from django.core.exceptions import ValidationError
 from django.utils.html import format_html
 from .models import Video
 
@@ -17,12 +18,20 @@ from .models import Video
 class VideoAdminForm(forms.ModelForm):
     class Meta:
         model = Video
-        fields = '__all__'
+        fields = ('title', 'description', 'category', 'video_file', 'thumbnail_image')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['video_file'].required = True
+        self.fields['thumbnail_image'].required = True
 
     def clean(self):
         cleaned = super().clean()
-        if not cleaned.get('thumbnail_image') and not cleaned.get('thumbnail_url'):
-            raise forms.ValidationError("Please upload a thumbnail image or provide a thumbnail URL.")
+        if not cleaned.get('video_file'):
+            raise forms.ValidationError("Please upload a video file (required).")
+        if not cleaned.get('thumbnail_image'):
+            raise forms.ValidationError("Please upload a thumbnail image (required).")
         return cleaned
 
 @admin.register(Video)
@@ -30,6 +39,8 @@ class VideoAdmin(admin.ModelAdmin):
     """
     Custom admin for Video entries.
     """
+
+    form = VideoAdminForm
 
     list_display = ('id', 'title', 'category', 'created_at', 'thumbnail_preview')
     list_filter = ('category', 'created_at')
@@ -40,26 +51,17 @@ class VideoAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {'fields': ('title', 'description', 'category')}),
         ('Source', {'fields': ('video_file',)}),
-        ('Artwork', {'fields': ('thumbnail_image', 'thumbnail_url', 'thumbnail_preview')}),
+        ('Artwork', {'fields': ('thumbnail_image', 'thumbnail_preview')}),
         ('Meta', {'fields': ('created_at',),}),
     )
-
-    def _effective_thumb_url(self, obj):
-        if obj.thumbnail_image:
-            return obj.thumbnail_image.url
-        if obj.thumbnail_url:
-            return obj.thumbnail_url
-        return None
 
     def thumbnail_preview(self, obj):
         """
         Render a small, rounded thumbnail preview in the admin.
         """
 
-        url = self._effective_thumb_url(obj)
-
-        if url:
-            return format_html('<img src="{}"/>', url)
+        if obj.thumbnail_image:
+            return format_html('<img src="{}"/>', obj.thumbnail_image.url)
         return '-'
     thumbnail_preview.short_description = 'Thumbnail'
 
