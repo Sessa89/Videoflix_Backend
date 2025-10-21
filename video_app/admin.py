@@ -21,8 +21,8 @@ class VideoAdminForm(forms.ModelForm):
 
     def clean(self):
         cleaned = super().clean()
-        if not cleaned.get('thumbnail_url'):
-            raise forms.ValidationError("Please provide a thumbnail URL")
+        if not cleaned.get('thumbnail_image') and not cleaned.get('thumbnail_url'):
+            raise forms.ValidationError("Please upload a thumbnail image or provide a thumbnail URL.")
         return cleaned
 
 @admin.register(Video)
@@ -40,17 +40,26 @@ class VideoAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {'fields': ('title', 'description', 'category')}),
         ('Source', {'fields': ('video_file',)}),
-        ('Artwork', {'fields': ('thumbnail_url', 'thumbnail_preview')}),
+        ('Artwork', {'fields': ('thumbnail_image', 'thumbnail_url', 'thumbnail_preview')}),
         ('Meta', {'fields': ('created_at',),}),
     )
+
+    def _effective_thumb_url(self, obj):
+        if obj.thumbnail_image:
+            return obj.thumbnail_image.url
+        if obj.thumbnail_url:
+            return obj.thumbnail_url
+        return None
 
     def thumbnail_preview(self, obj):
         """
         Render a small, rounded thumbnail preview in the admin.
         """
 
-        if obj.thumbnail_url:
-            return format_html('<img src="{}" style="height:60px;border-radius:6px;" />', obj.thumbnail_url)
+        url = self._effective_thumb_url(obj)
+
+        if url:
+            return format_html('<img src="{}"/>', url)
         return '-'
     thumbnail_preview.short_description = 'Thumbnail'
 

@@ -59,6 +59,12 @@ def video_post_delete(sender, instance: Video, **kwargs):
         logger.exception("Could not remove source file for video #%s", instance.pk)
 
     try:
+        if instance.thumbnail_image and os.path.isfile(instance.thumbnail_image.path):
+            os.remove(instance.thumbnail_image.path)
+    except Exception:
+        logger.exception("Could not remove thumbnail for video #%s", instance.pk)
+
+    try:
         hls_dir = _hls_dir_for(instance.pk)
         if hls_dir.exists():
             shutil.rmtree(hls_dir)
