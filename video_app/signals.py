@@ -35,10 +35,7 @@ def video_post_save(sender, instance, created, **kwargs):
     This keeps the HTTP request fast while media processing happens asynchronously.
     """
 
-    if not instance.video_file:
-        return
-    
-    try:
+    if created and instance.video_file and getattr(instance.video_file, 'path', None):
         queue = django_rq.get_queue('default', autocommit=True)
         queue.enqueue(
             transcode_to_hls,
@@ -47,26 +44,15 @@ def video_post_save(sender, instance, created, **kwargs):
             resolutions=list(getattr(settings, 'HLS_ALLOWED_RESOLUTIONS', {'480p', '720p'})),
             seg_seconds=int(getattr(settings, 'HLS_SEGMENT_SECONDS', 6)),
         )
-    except Exception:
-        logger.exception("Could not enqueue HLS job for video #%s", instance.pk)
 
 @receiver(post_delete, sender=Video)
 def video_post_delete(sender, instance: Video, **kwargs):
-    try:
-        if instance.video_file and os.path.isfile(instance.video_file.path):
-            os.remove(instance.video_file.path)
-    except Exception:
-        logger.exception("Could not remove source file for video #%s", instance.pk)
+    if instance.video_file and getattr(instance.video_file, 'path', None) and os.path.isfile(instance.video_file.path):
+        os.remove(instance.video_file.path)
 
-    try:
-        if instance.thumbnail_image and os.path.isfile(instance.thumbnail_image.path):
-            os.remove(instance.thumbnail_image.path)
-    except Exception:
-        logger.exception("Could not remove thumbnail for video #%s", instance.pk)
+    if instance.thumbnail_image and getattr(instance.thumbnail_image, 'path', None) and os.path.isfile(instance.thumbnail_image.path):
+        os.remove(instance.thumbnail_image.path)
 
-    try:
-        hls_dir = _hls_dir_for(instance.pk)
-        if hls_dir.exists():
-            shutil.rmtree(hls_dir)
-    except Exception:
-        logger.exception("Could not remove HLS dir for video #%s", instance.pk)
+    hls_dir = _hls_dir_for(instance.pk)
+    if hls_dir.exists():
+        shutil.rmtree(hls_dir)

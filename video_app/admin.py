@@ -60,8 +60,14 @@ class VideoAdmin(admin.ModelAdmin):
         Render a small, rounded thumbnail preview in the admin.
         """
 
-        if obj.thumbnail_image:
-            return format_html('<img src="{}"/>', obj.thumbnail_image.url)
+        if not obj:
+            return '-'
+        thumb = getattr(obj, 'thumbnail_image', None)
+        try:
+            if thumb and getattr(thumb, 'name', None):
+                return format_html('<img src="{}" style="height:50px" />', thumb.url)
+        except Exception:
+            pass
         return '-'
     thumbnail_preview.short_description = 'Thumbnail'
 
