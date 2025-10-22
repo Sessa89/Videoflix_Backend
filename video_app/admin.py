@@ -15,10 +15,12 @@ from .models import Video
 
 # Register your models here.
 
+
 class VideoAdminForm(forms.ModelForm):
     class Meta:
         model = Video
-        fields = ('title', 'description', 'category', 'video_file', 'thumbnail_image')
+        fields = ('title', 'description', 'category',
+                  'video_file', 'thumbnail_image')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -29,10 +31,13 @@ class VideoAdminForm(forms.ModelForm):
     def clean(self):
         cleaned = super().clean()
         if not cleaned.get('video_file'):
-            raise forms.ValidationError("Please upload a video file (required).")
+            raise forms.ValidationError(
+                "Please upload a video file (required).")
         if not cleaned.get('thumbnail_image'):
-            raise forms.ValidationError("Please upload a thumbnail image (required).")
+            raise forms.ValidationError(
+                "Please upload a thumbnail image (required).")
         return cleaned
+
 
 @admin.register(Video)
 class VideoAdmin(admin.ModelAdmin):
@@ -42,7 +47,8 @@ class VideoAdmin(admin.ModelAdmin):
 
     form = VideoAdminForm
 
-    list_display = ('id', 'title', 'category', 'created_at', 'thumbnail_preview')
+    list_display = ('id', 'title', 'category',
+                    'created_at', 'thumbnail_preview')
     list_filter = ('category', 'created_at')
     search_fields = ('title', 'description')
     readonly_fields = ('created_at', 'thumbnail_preview')
@@ -52,7 +58,7 @@ class VideoAdmin(admin.ModelAdmin):
         (None, {'fields': ('title', 'description', 'category')}),
         ('Source', {'fields': ('video_file',)}),
         ('Artwork', {'fields': ('thumbnail_image', 'thumbnail_preview')}),
-        ('Meta', {'fields': ('created_at',),}),
+        ('Meta', {'fields': ('created_at',), }),
     )
 
     def thumbnail_preview(self, obj):
@@ -65,7 +71,11 @@ class VideoAdmin(admin.ModelAdmin):
         thumb = getattr(obj, 'thumbnail_image', None)
         try:
             if thumb and getattr(thumb, 'name', None):
-                return format_html('<img src="{}" style="height:50px" />', thumb.url)
+                return format_html(
+                    '<div style="width:140px; aspect-ratio:16/9; overflow:hidden; border-radius:8px;" >'
+                        '<img src="{}" alt="" style="width:100%; height:100%; object-fit:cover; display:block;" />'
+                    '</div>',
+                    thumb.url)
         except Exception:
             pass
         return '-'
@@ -95,4 +105,5 @@ class VideoAdmin(admin.ModelAdmin):
 
         queryset.update(category=Video.Category.ROMANCE)
 
-    actions = ['set_category_drama', 'set_category_action', 'set_category_romance']
+    actions = ['set_category_drama',
+               'set_category_action', 'set_category_romance']
