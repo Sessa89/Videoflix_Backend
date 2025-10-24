@@ -81,14 +81,6 @@ class VideoAdmin(admin.ModelAdmin):
         return '-'
     thumbnail_preview.short_description = 'Thumbnail'
 
-    @admin.action(description='Set category → Drama')
-    def set_category_drama(self, request, queryset):
-        """
-        Bulk-set category to Drama.
-        """
-
-        queryset.update(category=Video.Category.DRAMA)
-
     @admin.action(description='Set category → Action')
     def set_category_action(self, request, queryset):
         """
@@ -96,6 +88,14 @@ class VideoAdmin(admin.ModelAdmin):
         """
 
         queryset.update(category=Video.Category.ACTION)
+
+    @admin.action(description='Set category → Drama')
+    def set_category_drama(self, request, queryset):
+        """
+        Bulk-set category to Drama.
+        """
+
+        queryset.update(category=Video.Category.DRAMA)
 
     @admin.action(description='Set category → Romance')
     def set_category_romance(self, request, queryset):
@@ -105,5 +105,56 @@ class VideoAdmin(admin.ModelAdmin):
 
         queryset.update(category=Video.Category.ROMANCE)
 
-    actions = ['set_category_drama',
-               'set_category_action', 'set_category_romance']
+    @admin.action(description='Set category → Comedy')
+    def set_category_comedy(self, request, queryset):
+        """
+        Bulk-set category to Comedy.
+        """
+
+        queryset.update(category=Video.Category.COMEDY)
+
+    @admin.action(description='Set category → Thriller')
+    def set_category_thriller(self, request, queryset):
+        """
+        Bulk-set category to Thriller.
+        """
+
+        queryset.update(category=Video.Category.THRILLER)
+
+    @admin.action(description='Set category → Scifi')
+    def set_category_scifi(self, request, queryset):
+        """
+        Bulk-set category to Scifi.
+        """
+
+        queryset.update(category=Video.Category.SCIFI)
+
+    @admin.action(description='Set category → Documentary')
+    def set_category_documentary(self, request, queryset):
+        """
+        Bulk-set category to Documentary.
+        """
+
+        queryset.update(category=Video.Category.DOC)
+
+    @admin.action(description='Set category → Animation')
+    def set_category_animation(self, request, queryset):
+        """
+        Bulk-set category to Animation.
+        """
+
+        queryset.update(category=Video.Category.ANIMATION)
+
+    @admin.action(description='Set category → Other')
+    def set_category_other(self, request, queryset):
+        """
+        Bulk-set category to Other.
+        """
+
+        queryset.update(category=Video.Category.OTHER)
+
+    actions = [
+        'set_category_action', 'set_category_drama', 'set_category_romance',
+        'set_category_comedy', 'set_category_thriller', 'set_category_scifi',
+        'set_category_documentary', 'set_category_animation', 'set_category_other'
+        ]
