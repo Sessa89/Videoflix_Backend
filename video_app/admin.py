@@ -28,17 +28,6 @@ class VideoAdminForm(forms.ModelForm):
         self.fields['video_file'].required = True
         self.fields['thumbnail_image'].required = True
 
-    def clean(self):
-        cleaned = super().clean()
-        if not cleaned.get('video_file'):
-            raise forms.ValidationError(
-                "Please upload a video file (required).")
-        if not cleaned.get('thumbnail_image'):
-            raise forms.ValidationError(
-                "Please upload a thumbnail image (required).")
-        return cleaned
-
-
 @admin.register(Video)
 class VideoAdmin(admin.ModelAdmin):
     """

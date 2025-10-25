@@ -36,14 +36,17 @@ def video_post_save(sender, instance, created, **kwargs):
     """
 
     if created and instance.video_file and getattr(instance.video_file, 'path', None):
-        queue = django_rq.get_queue('default', autocommit=True)
-        queue.enqueue(
-            transcode_to_hls,
-            instance.pk,
-            instance.video_file.path,
-            resolutions=list(getattr(settings, 'HLS_ALLOWED_RESOLUTIONS', {'480p', '720p'})),
-            seg_seconds=int(getattr(settings, 'HLS_SEGMENT_SECONDS', 6)),
-        )
+        try:
+            queue = django_rq.get_queue('default', autocommit=True)
+            queue.enqueue(
+                transcode_to_hls,
+                instance.pk,
+                instance.video_file.path,
+                resolutions=list(getattr(settings, 'HLS_ALLOWED_RESOLUTIONS', {'480p', '720p'})),
+                seg_seconds=int(getattr(settings, 'HLS_SEGMENT_SECONDS', 6)),
+            )
+        except Exception as e:
+            pass
 
 @receiver(post_delete, sender=Video)
 def video_post_delete(sender, instance: Video, **kwargs):
